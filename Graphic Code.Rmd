@@ -24,14 +24,16 @@ download.file(url = "https://registrar.fas.harvard.edu/files/fas-registrar/files
               mode = "wb")
 x.2019 <- read_xlsx("enrollment2019.xlsx", skip= 3) %>%
   clean_names() %>%
-  filter(! is.na(course_name))
+  filter(! is.na(course_name)) %>%
+  select(course_id, course_title, course_name, u_grad2019 = u_grad, course_department2019 = course_department)
 
 download.file(url = "http://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_2017_03_07_final_0.xlsx",
               destfile = "enrollment2017.xlsx",
               mode = "wb")
 x.2017 <- read_xlsx("enrollment2017.xlsx", skip = 3) %>%
   clean_names() %>%
-  filter(! is.na(course_name))
+  filter(! is.na(course_name)) %>%
+  select(course_id, course_title, course_name, u_grad2017 = u_grad, course_department2017 = course_department)
 
 file_delete(c("enrollment2017.xlsx", "enrollment2019.xlsx"))
 
@@ -40,6 +42,24 @@ join <- inner_join(x.2017, x.2019, by= "course_id", suffix = c(".2017", ".2019")
 ```
 
 ```{r code for graphic}
+p <- 
+  join %>% 
+  select(course_department2019, course_title.2019, course_name.2019 , u_grad2017, u_grad2019) %>%
+  mutate(change = u_grad2017 - u_grad2019) %>%
+  arrange(desc(change)) %>%
+  slice(1:10)
 
+plot <-
+  p %>%
+  ggplot(mapping = aes(x = course_name.2019, y = change, fill = course_department2019))
+
+ggplot <-
+  plot + geom_col() +
+  theme(legend.position = "top") +
+  coord_flip() +
+  scale_color_brewer(palette = "Pastel2") 
+  
+
+ggplot  
 ```
 
