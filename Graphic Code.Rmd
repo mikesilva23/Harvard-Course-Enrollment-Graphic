@@ -1,0 +1,45 @@
+---
+title: "Harvard Course Enrollment Graphic"
+author: "Mike Silva"
+date: "4/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+```
+
+```{r library dowloads}
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(fs)
+
+```
+
+```{r loading data }
+download.file(url = "https://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_3.22.19.xlsx", 
+              destfile = "enrollment2019.xlsx", 
+              mode = "wb")
+x.2019 <- read_xlsx("enrollment2019.xlsx", skip= 3) %>%
+  clean_names() %>%
+  filter(! is.na(course_name))
+
+download.file(url = "http://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_2017_03_07_final_0.xlsx",
+              destfile = "enrollment2017.xlsx",
+              mode = "wb")
+x.2017 <- read_xlsx("enrollment2017.xlsx", skip = 3) %>%
+  clean_names() %>%
+  filter(! is.na(course_name))
+
+file_delete(c("enrollment2017.xlsx", "enrollment2019.xlsx"))
+
+join <- inner_join(x.2017, x.2019, by= "course_id", suffix = c(".2017", ".2019"))
+
+```
+
+```{r code for graphic}
+
+```
+
