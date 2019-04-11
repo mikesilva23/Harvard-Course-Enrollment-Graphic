@@ -41,26 +41,45 @@ x.2019 <- read_xlsx("enrollment2019.xlsx", skip= 3) %>%
 #was extremely messy and elongated beforehand
   
   filter(! is.na(course_name)) %>%
-  filter(grad < 47) %>% 
+  filter(grad < 47) %>%
+  
+#also removed all the courses offered that nobody enrolled in
+  
+  filter(total != 0) %>% 
   
 #isolated the variables that I need to complete my graph  
   
   select(u_grad2019 = u_grad, course_department2019 = course_department, total2019 = total, grad2019 = grad)
+
+#remove file from directory once the data is loaded
 
 file_delete("enrollment2019.xlsx")
 
 ```
 
 ```{r code for graphic}
+#start with plotting a scatter plot graph with each
+#medical science class offered in spring 2019
+
 p0 <-
+  
+#subsetting the data set here allows me to filter for
+#just medical sciences
+  
   ggplot(data = subset(x.2019,
                        course_department2019 == "Medical Sciences"),
+         
+#the total number of students enrolled int each
+#course is on the x axis and the percentage of
+#grad students is the y axis which creates a
+#nice looking plot
+         
          mapping = aes( x = total2019,
                         y = grad2019/100,
                         color = course_department2019))
 p1 <-
-  p0 + geom_point(alpha = 1.0) + scale_x_log10() + scale_y_continuous()  + 
-                  scale_color_brewer("set2")
+  p0 + geom_point(alpha = 0.6) + scale_x_log10() + scale_y_continuous((labels=scales::percent))  + 
+                  scale_color_brewer(palette = "RdylGn")
 
 
 p2 <- 
@@ -71,7 +90,7 @@ p2 <-
                                 color = course_department2019))
 
 p3 <- 
-  p2 + geom_point(alpha = 0.8, data = subset(x.2019,
+  p2 + geom_point(alpha = 1.0, data = subset(x.2019,
                                              course_department2019 == "Economics"),
                   mapping = aes( x = total2019,
                                  y = grad2019/100,
@@ -81,12 +100,12 @@ p3 <-
 p4 <- 
   p3 + scale_y_continuous(labels=scales::percent)
 
-theme_set(theme_economist_white())
+theme_set(theme_economist())
 
 p4 + theme(legend.text = element_text(size = rel(0.75)),
            plot.title = element_text(size = rel(1.75)),
            legend.title = element_text(size = rel(0.75)),
-           plot.caption = element_text(size = rel(.5)))  +
+           plot.caption = element_text(size = rel(.75)))  +
     labs(color = "Course Department",
          x = "Class Size (log scale)",
          y = "Percent of Graduate Student Population",
