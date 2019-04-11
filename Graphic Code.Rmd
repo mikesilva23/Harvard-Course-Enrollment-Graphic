@@ -64,7 +64,8 @@ file_delete("enrollment2019.xlsx")
 p0 <-
   
 #subsetting the data set here allows me to filter for
-#just medical sciences
+#just medical sciences, which is the department that
+#offers the most courses in the semester
   
   ggplot(data = subset(x.2019,
                        course_department2019 == "Medical Sciences"),
@@ -76,13 +77,30 @@ p0 <-
          
          mapping = aes( x = total2019,
                         y = grad2019/100,
+                        
+#used the course department as the color in order for 
+#the legend to show which department is which color
+                        
                         color = course_department2019))
-p1 <-
-  p0 + geom_point(alpha = 0.6) + scale_x_log10() + scale_y_continuous((labels=scales::percent))  + 
-                  scale_color_brewer(palette = "RdylGn")
 
+p1 <-
+  
+#added the scatter plot with a log scale on the
+  #x axis to make it clearer to see and changed
+  #the y label to percentages
+  
+  p0 + geom_point(alpha = 0.6) + scale_x_log10()  + 
+                  
+#messed around with this function until I found
+  #a color scheme that fit well with the theme
+  
+  scale_color_brewer(palette = "RdylGn")
 
 p2 <- 
+  
+#added another scatter plot replicating the previous code
+#but filtered for the second most offered course department
+  
   p1 + geom_point(alpha = 0.8, data = subset(x.2019,
                                 course_department2019 == "Romance Languages & Lit"),
                   mapping = aes(x = total2019,
@@ -90,6 +108,10 @@ p2 <-
                                 color = course_department2019))
 
 p3 <- 
+  
+#repeated this code one more time with economics as the course
+#department because it is the third most offered department
+  
   p2 + geom_point(alpha = 1.0, data = subset(x.2019,
                                              course_department2019 == "Economics"),
                   mapping = aes( x = total2019,
@@ -98,18 +120,32 @@ p3 <-
 
 
 p4 <- 
-  p3 + scale_y_continuous(labels=scales::percent)
+  
+#added a percentage label to the y axis using the scales package briefly
+#and added all necessary labels
+  
+  p3 + scale_y_continuous(labels=scales::percent) +
+    labs(color = "Course Department",
+         x = "Class Size (log scale)",
+         y = "Percent of Graduate Student Population",
+         
+#debated where to separate the title for a second line for
+#a while and decided this was the cleanest way based on
+#word size
+         
+         title = "Spring 2019 Student Disitribution \nby Course Department",
+         caption = "Source: Harvard Registrar")
+
+#messed around with different themes and this one worked well with my graphic
 
 theme_set(theme_economist())
+
+#used this function to edit the text size of all of my labels
+#which makes everything look cleaner
 
 p4 + theme(legend.text = element_text(size = rel(0.75)),
            plot.title = element_text(size = rel(1.75)),
            legend.title = element_text(size = rel(0.75)),
-           plot.caption = element_text(size = rel(.75)))  +
-    labs(color = "Course Department",
-         x = "Class Size (log scale)",
-         y = "Percent of Graduate Student Population",
-         title = "Spring 2019 Student Disitribution \nby Course Department",
-         caption = "Source: Harvard Registrar")
+           plot.caption = element_text(size = rel(.75))) 
 ```
 
