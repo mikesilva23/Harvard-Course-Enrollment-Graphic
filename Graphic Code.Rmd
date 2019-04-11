@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
 ```
 
@@ -15,51 +15,82 @@ library(tidyverse)
 library(readxl)
 library(janitor)
 library(fs)
+library(ggthemes)
 
 ```
 
 ```{r loading data }
+#I first downloaded the file using the url from the
+#website
+
 download.file(url = "https://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_3.22.19.xlsx", 
               destfile = "enrollment2019.xlsx", 
               mode = "wb")
+
+#read the data
+
 x.2019 <- read_xlsx("enrollment2019.xlsx", skip= 3) %>%
+
+#made the data table easier to work with
+  
   clean_names() %>%
+
+#removed NA's from data table and removed all courses with 
+#more than 47 graduate students in order to remove all of 
+#the courses with 100% graduate students because my graphic
+#was extremely messy and elongated beforehand
+  
   filter(! is.na(course_name)) %>%
-  select(course_id, course_title, course_name, u_grad2019 = u_grad, course_department2019 = course_department)
+  filter(grad < 47) %>% 
+  
+#isolated the variables that I need to complete my graph  
+  
+  select(u_grad2019 = u_grad, course_department2019 = course_department, total2019 = total, grad2019 = grad)
 
-download.file(url = "http://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_2017_03_07_final_0.xlsx",
-              destfile = "enrollment2017.xlsx",
-              mode = "wb")
-x.2017 <- read_xlsx("enrollment2017.xlsx", skip = 3) %>%
-  clean_names() %>%
-  filter(! is.na(course_name)) %>%
-  select(course_id, course_title, course_name, u_grad2017 = u_grad, course_department2017 = course_department)
-
-file_delete(c("enrollment2017.xlsx", "enrollment2019.xlsx"))
-
-join <- inner_join(x.2017, x.2019, by= "course_id", suffix = c(".2017", ".2019"))
+file_delete("enrollment2019.xlsx")
 
 ```
 
 ```{r code for graphic}
-p <- 
-  join %>% 
-  select(course_department2019, course_title.2019, course_name.2019 , u_grad2017, u_grad2019) %>%
-  mutate(change = u_grad2017 - u_grad2019) %>%
-  arrange(desc(change)) %>%
-  slice(1:10)
+p0 <-
+  ggplot(data = subset(x.2019,
+                       course_department2019 == "Medical Sciences"),
+         mapping = aes( x = total2019,
+                        y = grad2019/100,
+                        color = course_department2019))
+p1 <-
+  p0 + geom_point(alpha = 1.0) + scale_x_log10() + scale_y_continuous()  + 
+                  scale_color_brewer("set2")
 
-plot <-
-  p %>%
-  ggplot(mapping = aes(x = course_name.2019, y = change, fill = course_department2019))
 
-ggplot <-
-  plot + geom_col() +
-  theme(legend.position = "top") +
-  coord_flip() +
-  scale_color_brewer(palette = "Pastel2") 
-  
+p2 <- 
+  p1 + geom_point(alpha = 0.8, data = subset(x.2019,
+                                course_department2019 == "Romance Languages & Lit"),
+                  mapping = aes(x = total2019,
+                                y = grad2019/100,
+                                color = course_department2019))
 
-ggplot  
+p3 <- 
+  p2 + geom_point(alpha = 0.8, data = subset(x.2019,
+                                             course_department2019 == "Economics"),
+                  mapping = aes( x = total2019,
+                                 y = grad2019/100,
+                                 color = course_department2019))
+
+
+p4 <- 
+  p3 + scale_y_continuous(labels=scales::percent)
+
+theme_set(theme_economist_white())
+
+p4 + theme(legend.text = element_text(size = rel(0.75)),
+           plot.title = element_text(size = rel(1.75)),
+           legend.title = element_text(size = rel(0.75)),
+           plot.caption = element_text(size = rel(.5)))  +
+    labs(color = "Course Department",
+         x = "Class Size (log scale)",
+         y = "Percent of Graduate Student Population",
+         title = "Spring 2019 Student Disitribution \nby Course Department",
+         caption = "Source: Harvard Registrar")
 ```
 
